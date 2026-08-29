@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An unofficial three-screen arcade-style parody loop.">
+  <title>Arcade Satire</title>
+  <style>
+
+:root {
+  color-scheme: dark;
+  --black: #000;
+  --red: #ff284c;
+  --green: #95f700;
+  --cyan: #26f8ff;
+  --magenta: #ff3dff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--black);
+}
+
+body {
+  color: #fff;
+  font-family: "Courier New", "Lucida Console", ui-monospace, monospace;
+}
+
+.arcade-cabinet {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  background: #000;
+}
+
+.crt-screen {
+  position: relative;
+  isolation: isolate;
+  width: min(100vw, 133.333svh);
+  height: min(100svh, 75vw);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 43%, rgb(8 18 18 / 32%), transparent 60%),
+    #000;
+  border: clamp(3px, 0.45vmin, 8px) solid #111;
+  box-shadow:
+    inset 0 0 6vmin #000,
+    inset 0 0 1.8vmin rgb(105 255 236 / 14%);
+}
+
+.crt-screen::before {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  opacity: 0.28;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgb(0 0 0 / 78%) 4px
+  );
+  animation: scanline-shiver 320ms steps(2, end) infinite;
+}
+
+.crt-screen::after {
+  position: absolute;
+  z-index: 11;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, rgb(255 0 0 / 2%), rgb(0 255 0 / 1%), rgb(0 0 255 / 2%)),
+    radial-gradient(ellipse at center, transparent 52%, rgb(0 0 0 / 75%) 100%);
+  background-size: 3px 100%, 100% 100%;
+}
+
+.status-bar,
+.disclaimer {
+  position: absolute;
+  z-index: 12;
+  left: 5%;
+  right: 5%;
+  display: flex;
+  color: rgb(255 255 255 / 66%);
+  font-size: clamp(0.48rem, 1.18vmin, 0.78rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgb(255 255 255 / 45%);
+}
+
+.status-bar {
+  top: 4%;
+  justify-content: space-between;
+}
+
+.status-bar::after {
+  position: absolute;
+  top: calc(100% + 0.8vmin);
+  left: 0;
+  width: 100%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #fff 12%, #fff 88%, transparent);
+  opacity: 0.22;
+}
+
+.screen-stack {
+  position: absolute;
+  z-index: 2;
+  inset: 11% 6% 14%;
+}
+
+.cycle-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 2.8vmin, 2.6rem);
+  opacity: 0;
+  visibility: hidden;
+  animation: screen-cycle 3s linear infinite;
+}
+
+.cycle-screen--1 {
+  animation-delay: 0s;
+}
+
+.cycle-screen--2 {
+  animation-delay: -2s;
+}
+
+.cycle-screen--3 {
+  animation-delay: -1s;
+}
+
+.message {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(1.9rem, 6.6vmin, 6.2rem);
+  font-weight: 900;
+  letter-spacing: 0.045em;
+  line-height: 1.25;
+  text-align: center;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.message--warning {
+  color: #fff763;
+  text-shadow:
+    0.06em 0 0 var(--red),
+    -0.04em 0 0 #ff6b00,
+    0 0 0.18em var(--red),
+    0 0 0.5em rgb(255 20 76 / 65%);
+}
+
+.message--monster {
+  max-width: 15ch;
+  color: var(--green);
+  font-size: clamp(1.55rem, 5.3vmin, 5rem);
+  text-shadow:
+    0.06em 0 0 #1d6d00,
+    0 0 0.2em var(--green),
+    0 0 0.62em rgb(149 247 0 / 55%);
+}
+
+.message--arcade {
+  color: var(--cyan);
+  text-shadow:
+    0.06em 0 0 var(--magenta),
+    -0.04em 0 0 #0b6cff,
+    0 0 0.2em var(--cyan),
+    0 0 0.6em rgb(38 248 255 / 54%);
+}
+
+.monster-logo {
+  display: block;
+  width: min(48%, 390px);
+  height: auto;
+  max-height: 34%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 0.35rem rgb(149 247 0 / 80%))
+    drop-shadow(0 0 1rem rgb(149 247 0 / 45%));
+}
+
+.insert-coin {
+  color: rgb(255 255 255 / 72%);
+  font-size: clamp(0.58rem, 1.55vmin, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-shadow: 0 0 0.7em #fff;
+  animation: blink 500ms steps(1, end) infinite;
+}
+
+.cycle-meter {
+  position: absolute;
+  z-index: 12;
+  bottom: 10.5%;
+  left: 50%;
+  display: flex;
+  gap: clamp(0.3rem, 0.8vmin, 0.7rem);
+  transform: translateX(-50%);
+}
+
+.cycle-meter__light {
+  width: clamp(0.38rem, 1vmin, 0.7rem);
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 255 255 / 38%);
+  background: transparent;
+  box-shadow: 0 0 0.6em transparent;
+  animation: meter-cycle 3s linear infinite;
+}
+
+.cycle-meter__light--1 {
+  animation-delay: 0s;
+}
+
+.cycle-meter__light--2 {
+  animation-delay: -2s;
+}
+
+.cycle-meter__light--3 {
+  animation-delay: -1s;
+}
+
+.disclaimer {
+  bottom: 3.6%;
+  justify-content: center;
+  color: rgb(255 255 255 / 43%);
+  font-size: clamp(0.38rem, 0.95vmin, 0.64rem);
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes screen-cycle {
+  0%,
+  33.332% {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  33.333%,
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes meter-cycle {
+  0%,
+  33.332% {
+    background: #fff;
+    box-shadow: 0 0 0.75em #fff;
+  }
+
+  33.333%,
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0.75em transparent;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes scanline-shiver {
+  50% {
+    transform: translateY(1px);
+  }
+}
+
+@media (max-aspect-ratio: 3 / 4) {
+  .message {
+    font-size: clamp(1.8rem, 7.5vw, 4.2rem);
+  }
+
+  .monster-logo {
+    width: min(62%, 390px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-screen::before,
+  .insert-coin {
+    animation: none;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <main class="arcade-cabinet" aria-label="A three-screen arcade-style satire loop">
+    <section class="crt-screen">
+      <header class="status-bar" aria-hidden="true">
+        <span>SATIRE // PARODY</span>
+        <span>3 SCREEN LOOP</span>
+      </header>
+
+      <div class="screen-stack">
+        <article class="cycle-screen cycle-screen--1" aria-hidden="true">
+          <h1 class="message message--warning">Red Bull causes cancer</h1>
+          <span class="insert-coin">PLAYER 1 READY</span>
+        </article>
+
+        <article class="cycle-screen cycle-screen--2" aria-hidden="true">
+          <img class="monster-logo" src="monster-energy-logo.webp" alt="" width="881" height="400">
+          <h1 class="message message--monster">Drink monster energy</h1>
+          <span class="insert-coin">PLAYER 2 READY</span>
+        </article>
+
+        <article class="cycle-screen cycle-screen--3" aria-hidden="true">
+          <h1 class="message message--arcade">Bring back the old arcade</h1>
+          <span class="insert-coin">PLAYER 3 READY</span>
+        </article>
+      </div>
+
+      <div class="cycle-meter" aria-hidden="true">
+        <i class="cycle-meter__light cycle-meter__light--1"></i>
+        <i class="cycle-meter__light cycle-meter__light--2"></i>
+        <i class="cycle-meter__light cycle-meter__light--3"></i>
+      </div>
+
+      <footer class="disclaimer">
+        UNOFFICIAL PARODY • NOT AFFILIATED WITH RED BULL OR MONSTER ENERGY
+      </footer>
+
+      <p class="sr-only">
+        Satirical messages: Red Bull causes cancer. Drink monster energy.
+        Bring back the old arcade.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
